@@ -116,10 +116,10 @@ export function useMessageStream({
               {
                 id: streamId,
                 role: 'assistant',
-                  parts: seed(),
-                  timestamp: occurredAt,
-                  pending: true,
-                  branchGroupId: groupId
+                parts: seed(),
+                timestamp: occurredAt,
+                pending: true,
+                branchGroupId: groupId
               }
             ]
           } else {

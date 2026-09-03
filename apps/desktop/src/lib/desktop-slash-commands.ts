@@ -441,10 +441,8 @@ function isAliasCommand(command: string): boolean {
 }
 
 const UNAVAILABLE_MESSAGE: Record<DesktopUnavailableReason, (command: string) => string> = {
-  advanced: command =>
-    `${command} 不显示在桌面斜杠面板中。请改用相应的桌面控件或终端界面。`,
-  'composer-voice': () =>
-    '语音聊天在输入框这里：点击麦克风按钮并选择“开始语音聊天”（或按 Ctrl+B）。',
+  advanced: command => `${command} 不显示在桌面斜杠面板中。请改用相应的桌面控件或终端界面。`,
+  'composer-voice': () => '语音聊天在输入框这里：点击麦克风按钮并选择“开始语音聊天”（或按 Ctrl+B）。',
   messaging: command => `${command} 仅用于消息平台。`,
   settings: command => `${command} 在桌面侧边栏中管理。`,
   terminal: command => `${command} 仅在终端界面中可用。`

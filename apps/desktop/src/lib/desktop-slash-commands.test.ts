@@ -344,12 +344,8 @@ describe('desktop slash command curation', () => {
   })
 
   it('uses desktop-specific labels for commands with different UI behavior', () => {
-    expect(desktopSlashDescription('/branch', 'Branch the current session')).toBe(
-      '将最新消息分支到新聊天'
-    )
-    expect(desktopSlashDescription('/skin', 'Show or change the display skin/theme')).toBe(
-      '切换桌面主题或切换到下一个'
-    )
+    expect(desktopSlashDescription('/branch', 'Branch the current session')).toBe('将最新消息分支到新聊天')
+    expect(desktopSlashDescription('/skin', 'Show or change the display skin/theme')).toBe('切换桌面主题或切换到下一个')
   })
 
   it('builds /skin completions from desktop themes', () => {
