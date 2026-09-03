@@ -526,21 +526,27 @@ async def loop_heartbeat_forever(
     # disables the witness, and the payload flag tells probes that staleness is
     # no longer sufficient authority to escalate.
     #
-    # Windows (non-POSIX generally): asyncio AF_UNIX support is POSIX-only, so
-    # the AF_UNIX arm below is gated to POSIX — an ungated call raised
-    # AttributeError on every native-Windows gateway start (#96956). Instead of
-    # leaving the witness permanently absent there, the non-POSIX arm binds a
-    # TCP loopback server on 127.0.0.1 with an OS-assigned port and publishes
-    # the port in the heartbeat payload (``loop_tick_tcp_port``) so probes know
-    # where to connect. Same protocol, same loop-owned semantics. If that bind
-    # fails, the payload records loop_tick_socket=False and probes classify
-    # UNKNOWN, never WEDGED — the graceful-drain backstop stays in place. (WSL2
-    # — the #90502 incident environment — is Linux and arms the socket.)
+    # Windows: asyncio.start_unix_server raises (no AF_UNIX event-loop
+    # support), so the witness is PERMANENTLY absent there — the payload
+    # records loop_tick_socket=False and every stale-file probe classifies
+    # UNKNOWN, never WEDGED. That is deliberate fail-safe: a wedged native
+    # Windows gateway keeps the graceful-drain backstop instead of an
+    # escalation verdict built on a witness that cannot exist. (WSL2 — the
+    # #90502 incident environment — is Linux and arms the socket normally.)
     tick_server = None
     tick_socket_path = None
-    tick_tcp_port = None
-    try:
-        if os.name == "posix":
+    # Windows: asyncio.start_unix_server raises (no AF_UNIX event-loop
+    # support), so the witness is PERMANENTLY absent there — the payload
+    # records loop_tick_socket=False and every stale-file probe classifies
+    # UNKNOWN, never WEDGED. That is deliberate fail-safe: a wedged native
+    # Windows gateway keeps the graceful-drain backstop instead of an
+    # escalation verdict built on a witness that cannot exist. (WSL2 — the
+    # #90502 incident environment — is Linux and arms the socket normally.)
+    # The whole arming block is therefore POSIX-gated: on Windows we never
+    # attempt start_unix_server (it does not exist there) and never log a
+    # misleading warning-with-traceback on every gateway start.
+    if os.name == "posix":
+        try:
             tick_socket_path = get_loop_tick_socket_path(home)
             tick_socket_path.parent.mkdir(parents=True, exist_ok=True)
             # Re-bind over a leftover node from a dead process (os._exit(75) /
@@ -551,9 +557,9 @@ async def loop_heartbeat_forever(
             # What asyncio does NOT do is clean up SIBLING nodes from other
             # dead PIDs, so sweep those to keep state/ from accumulating
             # gateway.loop-tick.*.sock nodes across crash-restart cycles.
-            # POSIX-only: os.kill(pid, 0) is a liveness probe here, but on
-            # Windows os.kill calls TerminateProcess for non-CTRL signals —
-            # and AF_UNIX server nodes are never created there anyway.
+            # os.kill(pid, 0) is a liveness probe here; on Windows os.kill
+            # calls TerminateProcess for non-CTRL signals — and AF_UNIX
+            # server nodes are never created there anyway.
             try:
                 for _stale in tick_socket_path.parent.glob(
                     "gateway.loop-tick.*.sock"
@@ -566,7 +572,7 @@ async def loop_heartbeat_forever(
                         _stale.unlink(missing_ok=True)
                         continue
                     try:
-                        os.kill(_stale_pid, 0)  # windows-footgun: ok — inside os.name == "posix" gate
+                        os.kill(_stale_pid, 0)
                     except OSError:
                         _stale.unlink(missing_ok=True)
             except Exception:
@@ -576,34 +582,17 @@ async def loop_heartbeat_forever(
             tick_server = await asyncio.start_unix_server(
                 _tick_socket_handler, path=str(tick_socket_path)
             )
-        else:
-            # Windows / non-POSIX: no AF_UNIX support, so use a TCP loopback
-            # server on 127.0.0.1 as the loop-scheduling witness instead.
-            # Same protocol (connect → read one byte "1"), same semantics
-            # (pure in-memory, zero disk I/O, answered only when the loop
-            # is dispatching). Port is dynamic (assigned by the OS) and
-            # published via the heartbeat payload so external probes know
-            # where to connect.
-            tick_server = await asyncio.start_server(
-                _tick_socket_handler, host="127.0.0.1", port=0
+        except Exception:
+            tick_server = None
+            logger.warning(
+                "Loop tick socket unavailable — liveness probes will have no "
+                "loop-scheduling witness and will not escalate on a stale heartbeat",
+                exc_info=True,
             )
-            # Get the actual port assigned by the OS
-            _sock_addrs = tick_server.sockets if hasattr(tick_server, "sockets") else []
-            for _s in _sock_addrs:
-                try:
-                    _sname = _s.getsockname()
-                    if isinstance(_sname, tuple) and len(_sname) >= 2:
-                        tick_tcp_port = int(_sname[1])
-                        break
-                except Exception:
-                    pass
-    except Exception:
-        tick_server = None
-        tick_tcp_port = None
-        logger.warning(
-            "Loop tick socket unavailable — liveness probes will have no "
-            "loop-scheduling witness and will not escalate on a stale heartbeat",
-            exc_info=True,
+    else:
+        logger.debug(
+            "Loop tick socket not armed: no AF_UNIX support on this platform; "
+            "liveness probes will have no loop-scheduling witness"
         )
 
     async def _write_off_loop() -> None:
@@ -614,10 +603,7 @@ async def loop_heartbeat_forever(
                 write_loop_heartbeat,
                 start_time=start_time,
                 home=home,
-                extra={
-                    "loop_tick_socket": tick_server is not None,
-                    "loop_tick_tcp_port": tick_tcp_port,
-                },
+                extra={"loop_tick_socket": tick_server is not None},
             )
         except asyncio.CancelledError:
             raise

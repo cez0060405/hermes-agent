@@ -137,7 +137,7 @@ describe('desktop slash command curation', () => {
     expect(isDesktopSlashCommand('/voice')).toBe(false)
 
     const message = desktopSlashUnavailableMessage('/voice')
-    expect(message).toContain('microphone button')
+    expect(message).toContain('麦克风按钮')
     expect(message).toContain('Ctrl+B')
   })
 
@@ -315,11 +315,11 @@ describe('desktop slash command curation', () => {
     })
 
     expect(filtered.categories).toEqual([
-      { name: 'Session', pairs: [['/new', 'Start a new desktop chat']] },
+      { name: 'Session', pairs: [['/new', '开始新的桌面聊天']] },
       { name: 'User commands', pairs: [['/ship-it', 'Run release checklist']] }
     ])
     expect(filtered.pairs).toEqual([
-      ['/new', 'Start a new desktop chat'],
+      ['/new', '开始新的桌面聊天'],
       ['/ship-it', 'Run release checklist']
     ])
     // skill_count is recomputed from the filtered output (only /ship-it is an
@@ -345,10 +345,10 @@ describe('desktop slash command curation', () => {
 
   it('uses desktop-specific labels for commands with different UI behavior', () => {
     expect(desktopSlashDescription('/branch', 'Branch the current session')).toBe(
-      'Branch the latest message into a new chat'
+      '将最新消息分支到新聊天'
     )
     expect(desktopSlashDescription('/skin', 'Show or change the display skin/theme')).toBe(
-      'Switch desktop theme or cycle to the next one'
+      '切换桌面主题或切换到下一个'
     )
   })
 
@@ -378,9 +378,9 @@ describe('desktop slash command curation', () => {
   })
 
   it('explains known commands that desktop owns elsewhere', () => {
-    expect(desktopSlashUnavailableMessage('/model sonnet')).toContain('model picker')
-    expect(desktopSlashUnavailableMessage('/skills')).toContain('desktop sidebar')
-    expect(desktopSlashUnavailableMessage('/clear')).toContain('terminal interface')
+    expect(desktopSlashUnavailableMessage('/model sonnet')).toContain('模型选择器')
+    expect(desktopSlashUnavailableMessage('/skills')).toContain('侧边栏')
+    expect(desktopSlashUnavailableMessage('/clear')).toContain('终端界面')
   })
 
   it('flags /model as a picker-owned command so the desktop opens the overlay', () => {

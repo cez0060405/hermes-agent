@@ -173,58 +173,58 @@ const rpc = (
  */
 const DESKTOP_COMMAND_SPECS: readonly DesktopCommandSpec[] = [
   // Local client actions
-  { name: '/new', description: 'Start a new desktop chat', aliases: ['/reset'], surface: action('new') },
+  { name: '/new', description: '开始新的桌面聊天', aliases: ['/reset'], surface: action('new') },
   {
     name: '/stop',
-    description: 'Stop the active turn and background processes',
+    description: '停止当前回合和后台进程',
     surface: action('stop')
   },
   {
     name: '/branch',
-    description: 'Branch the latest message into a new chat',
+    description: '将最新消息分支到新聊天',
     aliases: ['/fork'],
     surface: action('branch')
   },
-  { name: '/yolo', description: 'Toggle YOLO — auto-approve dangerous commands', surface: action('yolo') },
+  { name: '/yolo', description: '切换 YOLO 模式——自动批准高危命令', surface: action('yolo') },
   {
     name: '/wake',
-    description: 'Control the desktop wake-word listener [on|off|status]',
+    description: '控制桌面唤醒词监听 [on|off|status]',
     surface: action('wake'),
     argumentMode: 'options'
   },
   {
     name: '/handoff',
-    description: 'Hand off this session to a messaging platform',
+    description: '将会话移交给消息平台',
     surface: action('handoff'),
     argumentMode: 'options'
   },
-  { name: '/profile', description: 'Switch the active Hermes profile', surface: action('profile') },
+  { name: '/profile', description: '切换当前 Hermes 配置档案', surface: action('profile') },
   {
     name: '/skin',
-    description: 'Switch desktop theme or cycle to the next one',
+    description: '切换桌面主题或切换到下一个',
     surface: action('skin'),
     argumentMode: 'options'
   },
-  { name: '/title', description: 'Rename the current session', surface: action('title'), argumentMode: 'text' },
-  { name: '/help', description: 'Show desktop slash commands', aliases: ['/commands'], surface: action('help') },
+  { name: '/title', description: '重命名当前会话', surface: action('title'), argumentMode: 'text' },
+  { name: '/help', description: '显示桌面斜杠命令', aliases: ['/commands'], surface: action('help') },
   {
     name: '/browser',
-    description: 'Manage browser CDP connection [connect|disconnect|status] (local gateway only)',
+    description: '管理浏览器 CDP 连接 [connect|disconnect|status]（仅本地网关）',
     surface: action('browser'),
     argumentMode: 'options'
   },
   {
     name: '/journey',
-    description: 'Open the memory graph — skills + memories over time',
+    description: '打开记忆图谱——技能与记忆随时间的变化',
     aliases: ['/learning', '/memory-graph'],
     surface: action('journey')
   },
 
   // Overlay pickers
-  { name: '/model', description: 'Switch the model for this session', surface: picker('model'), hidden: true },
+  { name: '/model', description: '切换本会话使用的模型', surface: picker('model'), hidden: true },
   {
     name: '/resume',
-    description: 'Resume a saved session',
+    description: '恢复已保存的会话',
     aliases: ['/sessions', '/switch'],
     surface: picker('session'),
     // `mixed`, not `options`: the argument is a free-text search the picker
@@ -242,7 +242,7 @@ const DESKTOP_COMMAND_SPECS: readonly DesktopCommandSpec[] = [
   // "not a quick/plugin/skill command: compress" (#44456).
   {
     name: '/compress',
-    description: 'Compress this conversation context',
+    description: '压缩当前对话上下文',
     aliases: ['/compact'],
     surface: action('compress'),
     argumentMode: 'text'
@@ -252,30 +252,30 @@ const DESKTOP_COMMAND_SPECS: readonly DesktopCommandSpec[] = [
   // saw the acknowledgement (#99065). The answer arrives as btw.complete.
   {
     name: '/btw',
-    description: 'Ask a side question about this conversation without interrupting it',
+    description: '就当前对话问一个旁路问题（不打断对话）',
     surface: action('btw'),
     argumentMode: 'text'
   },
   {
     name: '/pet',
-    description: 'Toggle or adopt a petdex mascot (/pet, /pet list, /pet boba)',
+    description: '切换或领养宠物伙伴（/pet、/pet list、/pet boba）',
     surface: action('pet'),
     argumentMode: 'options'
   },
   {
     name: '/hatch',
-    description: 'Generate a new pet (opens the pet generator)',
+    description: '生成新宠物（打开宠物生成器）',
     aliases: ['/generate-pet'],
     surface: action('hatch')
   },
   {
     name: '/save',
-    description: 'Save the current transcript to JSON',
+    description: '将当前对话记录保存为 JSON',
     surface: rpc('session.save', ctx => ({ session_id: ctx.sessionId }))
   },
   {
     name: '/status',
-    description: 'Show current session status',
+    description: '显示当前会话状态',
     surface: rpc('session.status', ctx => ({ session_id: ctx.sessionId }))
   }
 ]
@@ -442,17 +442,17 @@ function isAliasCommand(command: string): boolean {
 
 const UNAVAILABLE_MESSAGE: Record<DesktopUnavailableReason, (command: string) => string> = {
   advanced: command =>
-    `${command} is not shown in the desktop slash palette. Use the relevant desktop control or terminal interface instead.`,
+    `${command} 不显示在桌面斜杠面板中。请改用相应的桌面控件或终端界面。`,
   'composer-voice': () =>
-    'Voice chat lives in the composer here: click the microphone button and choose "Start voice chat" (or press Ctrl+B).',
-  messaging: command => `${command} is only used from messaging platforms.`,
-  settings: command => `${command} is managed from the desktop sidebar.`,
-  terminal: command => `${command} is only available in the terminal interface.`
+    '语音聊天在输入框这里：点击麦克风按钮并选择“开始语音聊天”（或按 Ctrl+B）。',
+  messaging: command => `${command} 仅用于消息平台。`,
+  settings: command => `${command} 在桌面侧边栏中管理。`,
+  terminal: command => `${command} 仅在终端界面中可用。`
 }
 
 const PICKER_UNAVAILABLE_MESSAGE: Record<DesktopPickerId, (command: string) => string> = {
-  model: command => `${command} uses the desktop model picker instead of a slash command.`,
-  session: command => `${command} uses the desktop session picker instead of a slash command.`
+  model: command => `${command} 使用桌面模型选择器，而不是斜杠命令。`,
+  session: command => `${command} 使用桌面会话选择器，而不是斜杠命令。`
 }
 
 function normalizeCommand(command: string): string {
@@ -604,12 +604,12 @@ export function desktopSkinSlashCompletions(
     {
       text: '/skin list',
       display: '/skin list',
-      meta: 'Show available desktop themes'
+      meta: '显示可用的桌面主题'
     },
     {
       text: '/skin next',
       display: '/skin next',
-      meta: 'Cycle to the next desktop theme'
+      meta: '切换到下一个桌面主题'
     },
     ...themes.map(theme => ({
       text: `/skin ${theme.name}`,
